@@ -89,4 +89,200 @@
   <div id="questions"></div>
 
   <button onclick="resetAnswers()" class="btn" style="background:#bbb;">リセット</button>
-  <button
+  <button onclick="showResult()" class="btn" style="background:#007bff; color:white;">結果を見る</button>
+
+  <div id="resultArea">
+    <h2>診断結果</h2>
+    <p id="mainResult">未判定</p>
+
+    <h3>あなたのFIREキャラクター</h3>
+    <p id="fireCharacter"></p>
+
+    <h3>ネクストステップアドバイス（3つ）</h3>
+    <ul id="nextSteps"></ul>
+
+    <a class="line-btn" href="https://lin.ee/MHHqwQ9" target="_blank">
+      診断結果とコース案内をLINEで受け取る
+    </a>
+
+    <h3>タイプ別スコア</h3>
+    <div id="scoreArea" class="score-box"></div>
+  </div>
+
+  <h2>7つのFIREタイプの定義</h2>
+
+  <div class="type-box"><strong>Lean FIRE（リーン・ファイア）</strong>
+    <p>生活コストをできるだけ下げて、少ないお金でも満足できる暮らしを目指すスタイル。ミニマルで身軽な生き方がベースです。</p>
+  </div>
+
+  <div class="type-box"><strong>Fat FIRE（ファット・ファイア）</strong>
+    <p>今の快適な生活水準を維持しながら、十分な資産と収入で自由を得るスタイル。高収入・高資産を前提にした“リッチなFIRE”。</p>
+  </div>
+
+  <div class="type-box"><strong>Barista FIRE（バリスタ・ファイア）</strong>
+    <p>完全リタイアではなく、好きな仕事を週数日だけ続けながら、残りは自由時間にするハイブリッド型。働くこと自体も楽しみたい人向けです。</p>
+  </div>
+
+  <div class="type-box"><strong>Coast FIRE（コースト・ファイア）</strong>
+    <p>若いうちに投資元本をつくり、その後は資産の成長に“乗っていく”スタイル。将来の安心を早めに確保して、今は無理なく働き続けます。</p>
+  </div>
+
+  <div class="type-box"><strong>Slow FIRE（スロー・ファイア）</strong>
+    <p>一気に仕事を辞めるのではなく、働く時間を徐々に減らしながら自由時間を増やしていく、ゆるやかなFIRE。安心感とメンタルを大事にします。</p>
+  </div>
+
+  <div class="type-box"><strong>Passion FIRE（パッション・ファイア）</strong>
+    <p>「好きなこと」「やりたいこと」を軸に収入源をつくり、情熱とお金の両方を満たしていくスタイル。クリエイター・講師・発信者タイプに多いです。</p>
+  </div>
+
+  <div class="type-box"><strong>Family FIRE（ファミリー・ファイア）</strong>
+    <p>自分一人ではなく、夫婦・家族単位でお金と時間の計画を立てるスタイル。教育費・住宅・老後なども含めて「家族全体の自由」をデザインします。</p>
+  </div>
+
+</div>
+
+<script>
+  const questions = [
+    "経済的に自由になりたいという願望は強いほうだ。",
+    "支出を減らすために生活を最適化するのが好きだ。",
+    "収入を増やすために積極的にキャリアアップや副業に取り組みたい。",
+    "投資に関する知識を学ぶ意欲がある。",
+    "家族との時間や生活を大切にしたい。",
+    "将来に向けて安定した資産形成を望んでいる。",
+    "好きなことで収入を得たいと思う。",
+    "仕事を徐々に減らしていきたいと考える。",
+    "節約よりも収入アップを優先したい。",
+    "ミニマルな生活スタイルに魅力を感じる。",
+    "心理的な安心感を重視している。",
+    "自由時間を増やしたい。",
+    "家族と将来の資金計画を立てるのが重要だと思う。",
+    "やりたいことを仕事にしたい。",
+    "リスクを取ってでも理想の生活を目指したい。",
+    "心の豊かさやバランスを重視している。",
+    "将来の資産成長を見越した投資が好みだ。",
+    "自由な働き方を実現したい。"
+  ];
+
+  // ⭐⭐⭐ 仮 mapping（まず正常動作させるための暫定版）
+  const mapping = {
+    lean: [1, 2, 3],
+    fat: [4, 5, 6],
+    barista: [7, 8, 9],
+    coast: [10, 11, 12],
+    slow: [13, 14],
+    passion: [15, 16],
+    family: [17, 18]
+  };
+
+  const scores = {
+    lean: 0,
+    fat: 0,
+    barista: 0,
+    coast: 0,
+    slow: 0,
+    passion: 0,
+    family: 0
+  };
+
+  const container = document.getElementById("questions");
+
+  questions.forEach((q, index) => {
+    const div = document.createElement("div");
+    div.className = "question";
+    div.innerHTML = `<p><strong>${index+1}. ${q}</strong></p>`;
+    for (let i=1; i<=5; i++) {
+      const btn = document.createElement("span");
+      btn.className = "btn";
+      btn.textContent = i;
+      btn.onclick = () => selectAnswer(index, i, btn);
+      div.appendChild(btn);
+    }
+    container.appendChild(div);
+  });
+
+  const answers = {};
+
+  function selectAnswer(qIndex, value, btn) {
+    answers[qIndex] = value;
+    const parent = btn.parentNode;
+    [...parent.querySelectorAll('.btn')].forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  function resetAnswers() {
+    for (let k in answers) delete answers[k];
+    [...document.querySelectorAll('.btn')].forEach(b => b.classList.remove('selected'));
+    document.getElementById("resultArea").style.display = "none";
+  }
+
+  function showResult() {
+    if (Object.keys(answers).length < questions.length) {
+      alert("全ての質問に答えてください！");
+      return;
+    }
+
+    for (let k in scores) scores[k] = 0;
+
+    // ⭐ mapping にしたがってスコア加算
+    for (let type in mapping) {
+      mapping[type].forEach(qIndex => {
+        if (answers[qIndex - 1]) scores[type] += answers[qIndex - 1];
+      });
+    }
+
+    const resultType = Object.keys(scores).reduce((a,b) => scores[a] > scores[b] ? a : b);
+
+    const typeNames = {
+      lean: "Lean FIRE（リーン・ファイア）",
+      fat: "Fat FIRE（ファット・ファイア）",
+      barista: "Barista FIRE（バリスタ・ファイア）",
+      coast: "Coast FIRE（コースト・ファイア）",
+      slow: "Slow FIRE（スロー・ファイア）",
+      passion: "Passion FIRE（パッション・ファイア）",
+      family: "Family FIRE（ファミリー・ファイア）"
+    };
+
+    document.getElementById("mainResult").textContent = typeNames[resultType];
+
+    const characters = {
+      lean: "ミニマルで身軽、合理性を大切にするタイプ。",
+      fat: "豊かさと自由の両方を手に入れたいパワフルタイプ。",
+      barista: "働くことも好き、自由も欲しいバランス型。",
+      coast: "若いうちに種をまき、あとは自然成長に任せるタイプ。",
+      slow: "安心感とゆとりを大切にする穏やかタイプ。",
+      passion: "好きなことで生きていきたい情熱家。",
+      family: "家族との未来を最優先に考える温かなタイプ。"
+    };
+
+    document.getElementById("fireCharacter").textContent = characters[resultType];
+
+    const steps = {
+      lean: ["固定費の見直し", "投資の自動化", "身軽な生活設計"],
+      fat: ["収入の最大化", "投資額UP", "ライフプラン再設計"],
+      barista: ["働き方デザイン", "好きな仕事の明確化", "余白時間の確保"],
+      coast: ["長期投資の継続", "収入UPより継続優先", "保険・保障の見直し"],
+      slow: ["労働時間の調整", "生活の最適化", "自己理解を深める"],
+      passion: ["自己発信の強化", "スキルの棚卸し", "単価UPの仕組み"],
+      family: ["家族の資金計画", "教育費準備", "住宅・老後の見直し"]
+    };
+
+    const nextStepsArea = document.getElementById("nextSteps");
+    nextStepsArea.innerHTML = "";
+    steps[resultType].forEach(s => {
+      const li = document.createElement("li");
+      li.textContent = s;
+      nextStepsArea.appendChild(li);
+    });
+
+    const scoreArea = document.getElementById("scoreArea");
+    scoreArea.innerHTML = "";
+    for (let t in scores) {
+      scoreArea.innerHTML += `<p><strong>${typeNames[t]}:</strong> ${scores[t]}</p>`;
+    }
+
+    document.getElementById("resultArea").style.display = "block";
+  }
+</script>
+
+</body>
+</html>
