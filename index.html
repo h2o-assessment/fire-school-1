@@ -1,288 +1,562 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>FIRE診断</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Arial', sans-serif;
-      background: #f9f9f9;
-      padding: 20px;
-      line-height: 1.6;
-    }
-    h1, h2, h3 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #333;
-    }
-    p {
-      margin-bottom: 20px;
-      color: #555;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .btn {
-      display: inline-block;
-      margin: 5px;
-      padding: 10px 20px;
-      border-radius: 5px;
-      background: #ddd;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .btn:hover {
-      background: #ccc;
-    }
-    .btn.selected {
-      background: #4caf50;
-      color: white;
-    }
-    .question {
-      margin-bottom: 30px;
-    }
-    #resultArea {
-      margin-top: 40px;
-      padding: 20px;
-      background: #eef;
-      border-radius: 10px;
-      display: none;
-    }
-    .type-box {
-      margin-bottom: 20px;
-      padding: 10px;
-      background: #fff;
-      border-radius: 5px;
-      border: 1px solid #ddd;
-    }
-    .score-box {
-      background: #f4f4f4;
-      padding: 10px;
-      border-radius: 8px;
-    }
-    .line-btn {
-      display: block;
-      text-align: center;
-      margin: 20px auto;
-      padding: 12px 20px;
-      background: #06c755;
-      color: white;
-      font-size: 18px;
-      border-radius: 8px;
-      text-decoration: none;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FIREの7タイプ診断</title>
+<style>
+  :root {
+    --brand:#2E8BFF;
+    --accent:#FF6B35;
+    --bg:#F7F9FC;
+    --ink:#1a1a1a;
+    --muted:#667085;
+    --card:#fff;
+    --border:#e5e7eb;
+    --line:#06C755;
+  }
+
+  body {
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;
+  }
+
+  .wrap { max-width:960px; margin:0 auto; padding:20px; }
+
+  header {
+    padding:28px 20px;
+    background:linear-gradient(135deg,#eaf4ff,#fff);
+    border-bottom:1px solid var(--border);
+  }
+
+  h1 { font-size:28px; margin:0 0 6px; color:var(--brand); }
+  .lead { margin:0; color:var(--muted); }
+
+  .card {
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:0;
+    overflow:hidden;
+    box-shadow:0 3px 20px rgba(0,0,0,.05);
+  }
+
+  .section { padding:20px; }
+
+  .q {
+    padding:18px 20px;
+    border-top:1px solid var(--border);
+  }
+  .q:first-child { border-top:none; }
+  .q h3 { margin:0 0 14px; font-size:16px; }
+
+  /* 選択肢：カード全体が光るボタン風 */
+  .choice-group {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(90px,1fr));
+    gap:12px;
+  }
+  .choice { position:relative; }
+  .choice input {
+    position:absolute;
+    inset:0;
+    opacity:0;
+    cursor:pointer;
+  }
+  .choice label {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:14px 10px;
+    background:#fff;
+    border:1.5px solid var(--border);
+    border-radius:12px;
+    font-size:14px;
+    color:var(--muted);
+    transition:all .25s ease;
+    cursor:pointer;
+    box-shadow:0 1px 4px rgba(0,0,0,.04);
+  }
+  .choice label:hover {
+    background:#f0f7ff;
+    border-color:var(--brand);
+    box-shadow:0 4px 14px rgba(46,139,255,.15);
+  }
+  .choice input:checked + label {
+    background:var(--brand);
+    color:#fff;
+    border-color:var(--brand);
+    box-shadow:0 4px 18px rgba(46,139,255,.35);
+    transform:translateY(-1px);
+    font-weight:600;
+  }
+
+  .toolbar {
+    padding:18px;
+    border-top:1px solid var(--border);
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+    background:#fff;
+  }
+  button {
+    padding:10px 16px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    cursor:pointer;
+    background:#fff;
+    transition:.2s;
+    font-size:14px;
+  }
+  button.primary {
+    background:var(--brand);
+    color:#fff;
+    border-color:var(--brand);
+    font-weight:600;
+  }
+  button.primary:hover { opacity:.88; }
+  button.ghost:hover { background:#f3f4f6; }
+
+  .results {
+    display:none;
+    margin-top:20px;
+    opacity:0;
+    transform:translateY(8px);
+    transition:opacity .4s ease, transform .4s ease;
+  }
+  .results.show {
+    display:grid;
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .badge {
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:var(--brand);
+    font-weight:600;
+    font-size:13px;
+  }
+
+  .res-card {
+    background:#fff;
+    padding:18px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:0 2px 14px rgba(0,0,0,.05);
+  }
+
+  .grid { display:grid; gap:20px; }
+  @media(min-width:768px) { .grid { grid-template-columns:1.1fr 1fr; } }
+
+  .bar {
+    background:#e5ecff;
+    height:10px;
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .bar > i {
+    display:block;
+    height:100%;
+    background:var(--brand);
+    width:0;
+    transition:width .6s ease;
+  }
+
+  .pair {
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+  }
+
+  .char-box {
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    background:#f9fafb;
+    border:1px dashed var(--border);
+    font-size:13px;
+  }
+
+  .next-box {
+    margin-top:14px;
+    padding:10px 12px;
+    border-radius:10px;
+    background:#fdfaf5;
+    border:1px solid #facc6b;
+    font-size:13px;
+  }
+  .next-box ul {
+    margin:6px 0 0;
+    padding-left:18px;
+  }
+  .next-box li { margin:2px 0; }
+
+  .note {
+    font-size:12px;
+    color:var(--muted);
+    margin-top:10px;
+  }
+
+  .btn-line {
+    background:var(--line);
+    border-color:var(--line);
+    color:#fff;
+    font-weight:600;
+  }
+  .btn-line:hover { opacity:.9; }
+
+  /* 7タイプ定義セクション */
+  .types-card {
+    margin-top:32px;
+    padding:20px;
+    background:#fff;
+    border-radius:14px;
+    border:1px solid var(--border);
+    box-shadow:0 2px 12px rgba(0,0,0,.04);
+  }
+  .types-card h2 {
+    margin-top:0;
+    margin-bottom:8px;
+    color:var(--brand);
+  }
+  .type-item {
+    padding:10px 0;
+    border-top:1px solid var(--border);
+  }
+  .type-item:first-child { border-top:none; }
+  .type-item h3 {
+    margin:0 0 4px;
+    font-size:15px;
+  }
+  .type-item p {
+    margin:0;
+    font-size:13px;
+    color:var(--muted);
+  }
+</style>
 </head>
 <body>
 
-<div class="container">
-  <h1>FIREの7タイプ診断</h1>
-  <p>18問に答えて、あなたのFIREスタイルとキャラクター、次の一歩を診断します。<br>
-  各設問ごとに、1〜5のボタンをタップしてください（選ぶとボタン全体が色づきます）。</p>
+<header>
+  <div class="wrap">
+    <h1>FIREの7タイプ診断</h1>
+    <p class="lead">18問に答えて、あなたのFIREスタイルとキャラクター、次の一歩を診断します。</p>
+  </div>
+</header>
 
-  <div id="questions"></div>
+<main class="wrap">
 
-  <button onclick="resetAnswers()" class="btn" style="background:#bbb;">リセット</button>
-  <button onclick="showResult()" class="btn" style="background:#007bff; color:white;">結果を見る</button>
-
-  <div id="resultArea">
-    <h2>診断結果</h2>
-    <p id="mainResult">未判定</p>
-
-    <h3>あなたのFIREキャラクター</h3>
-    <p id="fireCharacter"></p>
-
-    <h3>ネクストステップアドバイス（3つ）</h3>
-    <ul id="nextSteps"></ul>
-
-    <a class="line-btn" href="https://lin.ee/MHHqwQ9" target="_blank">
-      診断結果とコース案内をLINEで受け取る
-    </a>
-
-    <h3>タイプ別スコア</h3>
-    <div id="scoreArea" class="score-box"></div>
+<form id="quiz" class="card">
+  <div class="section">
+    <p style="font-size:13px;color:var(--muted);margin:0;">
+      各設問ごとに、1〜5のボタンをタップしてください（選ぶとボタン全体が色づきます）。
+    </p>
   </div>
 
-  <h2>7つのFIREタイプの定義</h2>
+  <div id="questions" class="section"></div>
 
-  <div class="type-box"><strong>Lean FIRE（リーン・ファイア）</strong>
+  <div class="toolbar">
+    <button type="reset" class="ghost">リセット</button>
+    <button type="button" id="calc" class="primary">結果を見る</button>
+  </div>
+</form>
+
+<section id="results" class="results grid" aria-live="polite">
+  <div class="res-card">
+    <h2 style="margin:0 0 8px;">診断結果</h2>
+    <span id="winner" class="badge">未判定</span>
+    <p id="desc" style="margin-top:10px;"></p>
+
+    <div class="char-box" id="char-box">
+      <strong>あなたのFIREキャラクター</strong>
+      <div id="char-name" style="margin-top:4px;"></div>
+      <div id="char-desc" style="margin-top:2px;"></div>
+    </div>
+
+    <div class="next-box">
+      <strong>ネクストステップアドバイス（3つ）</strong>
+      <ul id="next-steps"></ul>
+    </div>
+
+    <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button type="button" class="btn-line" id="lineBtn">
+        診断結果とコース案内をLINEで受け取る
+      </button>
+    </div>
+
+    <p class="note">
+      ※ ボタンを押すと、糸ファンディング公式LINE「FIREの学校」の<br>
+      友だち追加・トーク画面（<span style="word-break:break-all;">https://lin.ee/MHHqwQ9</span>）が開きます。
+    </p>
+  </div>
+
+  <div class="res-card">
+    <h3 style="margin:0 0 10px;">タイプ別スコア</h3>
+    <div id="bars"></div>
+  </div>
+</section>
+
+<!-- 7タイプの定義セクション -->
+<section class="types-card">
+  <h2>7つのFIREタイプの定義</h2>
+  <p style="font-size:13px;color:var(--muted);margin-top:0;margin-bottom:12px;">
+    FIREは「ひとつの正解」ではなく、ライフスタイルに合わせた7つのスタイルがあります。
+  </p>
+
+  <div class="type-item">
+    <h3>Lean FIRE（リーン・ファイア）</h3>
     <p>生活コストをできるだけ下げて、少ないお金でも満足できる暮らしを目指すスタイル。ミニマルで身軽な生き方がベースです。</p>
   </div>
 
-  <div class="type-box"><strong>Fat FIRE（ファット・ファイア）</strong>
+  <div class="type-item">
+    <h3>Fat FIRE（ファット・ファイア）</h3>
     <p>今の快適な生活水準を維持しながら、十分な資産と収入で自由を得るスタイル。高収入・高資産を前提にした“リッチなFIRE”。</p>
   </div>
 
-  <div class="type-box"><strong>Barista FIRE（バリスタ・ファイア）</strong>
+  <div class="type-item">
+    <h3>Barista FIRE（バリスタ・ファイア）</h3>
     <p>完全リタイアではなく、好きな仕事を週数日だけ続けながら、残りは自由時間にするハイブリッド型。働くこと自体も楽しみたい人向けです。</p>
   </div>
 
-  <div class="type-box"><strong>Coast FIRE（コースト・ファイア）</strong>
+  <div class="type-item">
+    <h3>Coast FIRE（コースト・ファイア）</h3>
     <p>若いうちに投資元本をつくり、その後は資産の成長に“乗っていく”スタイル。将来の安心を早めに確保して、今は無理なく働き続けます。</p>
   </div>
 
-  <div class="type-box"><strong>Slow FIRE（スロー・ファイア）</strong>
+  <div class="type-item">
+    <h3>Slow FIRE（スロー・ファイア）</h3>
     <p>一気に仕事を辞めるのではなく、働く時間を徐々に減らしながら自由時間を増やしていく、ゆるやかなFIRE。安心感とメンタルを大事にします。</p>
   </div>
 
-  <div class="type-box"><strong>Passion FIRE（パッション・ファイア）</strong>
+  <div class="type-item">
+    <h3>Passion FIRE（パッション・ファイア）</h3>
     <p>「好きなこと」「やりたいこと」を軸に収入源をつくり、情熱とお金の両方を満たしていくスタイル。クリエイター・講師・発信者タイプに多いです。</p>
   </div>
 
-  <div class="type-box"><strong>Family FIRE（ファミリー・ファイア）</strong>
+  <div class="type-item">
+    <h3>Family FIRE（ファミリー・ファイア）</h3>
     <p>自分一人ではなく、夫婦・家族単位でお金と時間の計画を立てるスタイル。教育費・住宅・老後なども含めて「家族全体の自由」をデザインします。</p>
   </div>
+</section>
 
-</div>
+</main>
 
 <script>
-  const questions = [
-    "経済的に自由になりたいという願望は強いほうだ。",
-    "支出を減らすために生活を最適化するのが好きだ。",
-    "収入を増やすために積極的にキャリアアップや副業に取り組みたい。",
-    "投資に関する知識を学ぶ意欲がある。",
-    "家族との時間や生活を大切にしたい。",
-    "将来に向けて安定した資産形成を望んでいる。",
-    "好きなことで収入を得たいと思う。",
-    "仕事を徐々に減らしていきたいと考える。",
-    "節約よりも収入アップを優先したい。",
-    "ミニマルな生活スタイルに魅力を感じる。",
-    "心理的な安心感を重視している。",
-    "自由時間を増やしたい。",
-    "家族と将来の資金計画を立てるのが重要だと思う。",
-    "やりたいことを仕事にしたい。",
-    "リスクを取ってでも理想の生活を目指したい。",
-    "心の豊かさやバランスを重視している。",
-    "将来の資産成長を見越した投資が好みだ。",
-    "自由な働き方を実現したい。"
-  ];
+/* === FIREタイプ + キャラクター + ネクストステップ === */
+const TYPES = {
+  Lean:{
+    label:"Lean FIRE",
+    desc:"少ない支出で豊かに暮らすミニマル派。生活コストを最適化し、身軽さで自由度を上げるスタイルです。",
+    char:"森のミニマリスト『リーニー』",
+    charDesc:"小さな荷物で世界を旅する、身軽さの達人。持たないことで、本当に大事なものだけを大切にします。",
+    steps:[
+      "固定費（住居・通信・保険など）の合計をまずは10〜15%削減してみる。",
+      "家計アプリで「どこにいくら使っているか」を1か月記録する。",
+      "生活コストの低いエリアや働き方（リモートなど）を情報収集してみる。"
+    ]
+  },
+  Fat:{
+    label:"Fat FIRE",
+    desc:"生活水準を落とさずに自由を得るリッチ派。収入拡張と分散投資でゆとりあるライフスタイルを守ります。",
+    char:"都会のプランナー『ファティ』",
+    charDesc:"夜景の見える部屋で、資産と人生のプランを描く戦略家。快適さと堅実さのバランス感覚が持ち味です。",
+    steps:[
+      "3年後の理想年収と、そのための「昇進・転職・スキルアップ」を書き出す。",
+      "節税・投資・保険など、お金回りをプロと一度整理する。",
+      "高配当やインデックスなど、資産からのキャッシュフロー比率を上げていく。"
+    ]
+  },
+  Barista:{
+    label:"Barista FIRE",
+    desc:"好きな仕事を週数日だけ続けるハイブリッド型。つながりと心地よさを大切にします。",
+    char:"カフェワーカー『バリスタ』",
+    charDesc:"お気に入りのカフェで、好きな時間だけ働くライフスタイル。人との会話と、ちょうど良い忙しさが心地よいタイプです。",
+    steps:[
+      "理想の1週間（働く日・休む日・学ぶ日）を紙に書いてみる。",
+      "今の職場・働き方で、時間を減らす交渉や副業へのシフトの可能性を探る。",
+      "社会保険・年金・収入の下限ラインを一度数字で確認しておく。"
+    ]
+  },
+  Coast:{
+    label:"Coast FIRE",
+    desc:"若いうちに投資元本を作り、将来は資産の自走に任せる型。心理的な安心を早めに手に入れたい人向け。",
+    char:"波乗りプランナー『コースト』",
+    charDesc:"早めに波（元本）をつかんで、あとは流れに乗るタイプ。今も未来も、バランスよく楽しみたい人です。",
+    steps:[
+      "自分のFIRE必要元本をざっくり試算して、目標金額と年数を仮決めする。",
+      "つみたてNISAや自動積立の金額を「今の自分のMAX」ではなく「少しきつい」ラインで設定する。",
+      "年1回はポートフォリオを見直し、不安や疑問をメモしておく。"
+    ]
+  },
+  Slow:{
+    label:"Slow FIRE",
+    desc:"段階的に働く時間を減らし、無理なく自由へ進む型。安定とメンタルを大切にします。",
+    char:"のんびりスケジューラー『スロー』",
+    charDesc:"一気に変えず、少しずつ理想に近づく堅実派。手帳とともにじっくり人生を組み立てます。",
+    steps:[
+      "直近1年間で、仕事量・残業時間を「これ以上増やしたくない上限」を決める。",
+      "半年〜1年で勤務時間を少し減らすための作戦（部署・働き方・副業）を考える。",
+      "自由になった時間を“何に使うか”を、先に具体的に決めておく。"
+    ]
+  },
+  Passion:{
+    label:"Passion FIRE",
+    desc:"「好きなこと」を軸に収入源をつくり、情熱とお金の両方を満たしていくスタイル。自己表現や創作、教育で生きたい人向け。",
+    char:"クリエイターの火種『パッション』",
+    charDesc:"アイデアノートとPCが相棒。作品や発信を通して、人の心を動かすことに喜びを感じます。",
+    steps:[
+      "自分の“好き・得意・経験”の掛け算で、出せそうなテーマを3つ書き出す。",
+      "そのうち1つで、無料コンテンツ（記事・PDF・ミニ講座）をまず1つ作ってみる。",
+      "興味を持ってくれた人を集めるために、メルマガやLINEなどの入口を用意する。"
+    ]
+  },
+  Family:{
+    label:"Family FIRE",
+    desc:"自分一人ではなく、家族単位でお金と時間の計画を立てるスタイル。家族全体の自由をデザインします。",
+    char:"ホームナビゲーター『ファミー』",
+    charDesc:"家族が笑顔でいられる環境づくりが得意。家計も時間も“みんなのしあわせ”を軸に考えます。",
+    steps:[
+      "家族と「理想の休日」「理想の暮らし」について、軽いテーマから話してみる。",
+      "世帯の収入・支出・貯蓄率を、ざっくりで良いので一度“見える化”する。",
+      "教育費・住宅・老後など、気になっているテーマを1つ選び、一緒に情報収集する日をつくる。"
+    ]
+  }
+};
 
-  const scores = {
-    lean: 0,
-    fat: 0,
-    barista: 0,
-    coast: 0,
-    slow: 0,
-    passion: 0,
-    family: 0
-  };
+/* === 質問定義（18問） === */
+const QUESTIONS = [
+  {text:"物よりも体験にお金を使いたい", map:["Lean"]},
+  {text:"今の生活水準をなるべく維持したい", map:["Fat"]},
+  {text:"収入が少し減っても、自由時間を増やしたい", map:["Barista","Slow"]},
+  {text:"若いうちから投資元本を積み上げたい", map:["Coast"]},
+  {text:"一気に変えるより、段階的に働き方を変えたい", map:["Slow"]},
+  {text:"“好き”や得意を仕事にしていきたい", map:["Passion"]},
+  {text:"家族との時間を最優先したい", map:["Family"]},
+  {text:"固定費の最適化や節約に興味がある", map:["Lean"]},
+  {text:"少し贅沢でも快適な暮らしを続けたい", map:["Fat"]},
+  {text:"週3〜4日くらい働くスタイルが理想だ", map:["Barista"]},
+  {text:"自動積立など“仕組み化”が好きだ", map:["Coast","Lean"]},
+  {text:"急な変化は苦手で、少しずつ慣れていきたい", map:["Slow"]},
+  {text:"発信・創作・教えることに興味がある", map:["Passion"]},
+  {text:"家族とお金や将来の話をオープンにしたい", map:["Family"]},
+  {text:"生活コストの低い地域への移住に興味がある", map:["Lean"]},
+  {text:"都心や今の住環境など、便利さも大事だ", map:["Fat"]},
+  {text:"完全リタイアより、少しは働き続けたい", map:["Barista"]},
+  {text:"“元本を作ってから安心して働き方を緩めたい”と思う", map:["Coast"]}
+];
 
-  const mapping = {
-    lean: [1,10],
-    fat: [3,9,15],
-    barista: [7],
-    coast: [4,17],
-    slow: [8,16],
-    passion: [7,14],
-    family: [5,13]
-  };
+/* === 質問UI生成 === */
+const qArea = document.getElementById("questions");
 
-  const container = document.getElementById("questions");
+QUESTIONS.forEach((q,i)=>{
+  const id = "q" + (i+1);
+  const div = document.createElement("div");
+  div.className = "q";
+  div.innerHTML = `
+    <h3>${i+1}. ${q.text}</h3>
+    <div class="choice-group">
+      ${[1,2,3,4,5].map(v=>`
+        <div class="choice">
+          <input type="radio" name="${id}" value="${v}" id="${id}_${v}">
+          <label for="${id}_${v}">${v}</label>
+        </div>
+      `).join("")}
+    </div>
+  `;
+  qArea.appendChild(div);
+});
 
-  questions.forEach((q, index) => {
-    const div = document.createElement("div");
-    div.className = "question";
-    div.innerHTML = `<p><strong>${index+1}. ${q}</strong></p>`;
-    for (let i=1; i<=5; i++) {
-      const btn = document.createElement("span");
-      btn.className = "btn";
-      btn.textContent = i;
-      btn.onclick = () => selectAnswer(index, i, btn);
-      div.appendChild(btn);
+/* === スコア計算 === */
+function calcScores(){
+  const scores = {Lean:0,Fat:0,Barista:0,Coast:0,Slow:0,Passion:0,Family:0};
+  QUESTIONS.forEach((q,i)=>{
+    const chosen = document.querySelector(`input[name="q${i+1}"]:checked`);
+    if(chosen){
+      const val = parseInt(chosen.value,10) - 1; // 0〜4
+      q.map.forEach(t=>{ scores[t] += val; });
     }
-    container.appendChild(div);
+  });
+  return scores;
+}
+
+/* === 結果表示 === */
+const resSection = document.getElementById("results");
+const winnerEl = document.getElementById("winner");
+const descEl = document.getElementById("desc");
+const barsEl = document.getElementById("bars");
+const charNameEl = document.getElementById("char-name");
+const charDescEl = document.getElementById("char-desc");
+const nextEl = document.getElementById("next-steps");
+
+document.getElementById("calc").addEventListener("click", ()=>{
+  const scores = calcScores();
+  const order = Object.keys(TYPES);
+  let best = order[0], bestScore = -999;
+
+  order.forEach(k=>{
+    if(scores[k] > bestScore){
+      best = k;
+      bestScore = scores[k];
+    }
   });
 
-  const answers = {};
+  const t = TYPES[best];
 
-  function selectAnswer(qIndex, value, btn) {
-    answers[qIndex] = value;
-    const parent = btn.parentNode;
-    [...parent.querySelectorAll('.btn')].forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-  }
+  // メイン結果
+  winnerEl.textContent = t.label;
+  descEl.textContent = t.desc;
+  charNameEl.textContent = t.char;
+  charDescEl.textContent = t.charDesc;
 
-  function resetAnswers() {
-    for (let k in answers) delete answers[k];
-    [...document.querySelectorAll('.btn')].forEach(b => b.classList.remove('selected'));
-    document.getElementById("resultArea").style.display = "none";
-  }
+  // ネクストステップ
+  nextEl.innerHTML = "";
+  (t.steps || []).forEach(step=>{
+    const li = document.createElement("li");
+    li.textContent = step;
+    nextEl.appendChild(li);
+  });
 
-  function showResult() {
-    if (Object.keys(answers).length < questions.length) {
-      alert("全ての質問に答えてください！");
-      return;
-    }
+  // バー描画
+  barsEl.innerHTML = "";
+  const max = Math.max(...Object.values(scores), 1);
+  order.forEach(k=>{
+    const v = scores[k];
+    const pct = Math.round((v / max) * 100);
+    const row = document.createElement("div");
+    row.style.margin = "10px 0 14px";
+    row.innerHTML = `
+      <div class="pair">
+        <strong>${TYPES[k].label}</strong>
+        <span>${v} 点</span>
+      </div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+    `;
+    barsEl.appendChild(row);
+  });
 
-    // スコア初期化
-    for (let k in scores) scores[k] = 0;
+  // 結果セクションをふわっと表示
+  resSection.classList.add("show");
+  resSection.scrollIntoView({behavior:"smooth"});
+});
 
-    // スコア集計
-    for (let type in mapping) {
-      mapping[type].forEach(qIndex => {
-        if (answers[qIndex-1]) scores[type] += answers[qIndex-1];
-      });
-    }
+/* リセットで結果非表示 */
+document.querySelector("button[type='reset']").addEventListener("click", ()=>{
+  resSection.classList.remove("show");
+});
 
-    // 最大スコアタイプ
-    const resultType = Object.keys(scores).reduce((a,b) => scores[a] > scores[b] ? a : b);
-
-    const typeNames = {
-      lean: "Lean FIRE（リーン・ファイア）",
-      fat: "Fat FIRE（ファット・ファイア）",
-      barista: "Barista FIRE（バリスタ・ファイア）",
-      coast: "Coast FIRE（コースト・ファイア）",
-      slow: "Slow FIRE（スロー・ファイア）",
-      passion: "Passion FIRE（パッション・ファイア）",
-      family: "Family FIRE（ファミリー・ファイア）"
-    };
-
-    document.getElementById("mainResult").textContent = typeNames[resultType];
-
-    const characters = {
-      lean: "ミニマルで身軽、合理性を大切にするタイプ。",
-      fat: "豊かさと自由の両方を手に入れたいパワフルタイプ。",
-      barista: "働くことも好き、自由も欲しいバランス型。",
-      coast: "若いうちに種をまき、あとは自然成長に任せるタイプ。",
-      slow: "安心感とゆとりを大切にする穏やかタイプ。",
-      passion: "好きなことで生きていきたい情熱家。",
-      family: "家族との未来を最優先に考える温かなタイプ。"
-    };
-
-    document.getElementById("fireCharacter").textContent = characters[resultType];
-
-    const steps = {
-      lean: ["固定費の見直し", "投資の自動化", "身軽な生活設計"],
-      fat: ["収入の最大化", "投資額UP", "ライフプラン再設計"],
-      barista: ["働き方デザイン", "好きな仕事の明確化", "余白時間の確保"],
-      coast: ["長期投資の継続", "収入UPより継続優先", "保険・保障の見直し"],
-      slow: ["労働時間の調整", "生活の最適化", "自己理解を深める"],
-      passion: ["自己発信の強化", "スキルの棚卸し", "単価UPの仕組み"],
-      family: ["家族の資金計画", "教育費準備", "住宅・老後の見直し"]
-    };
-
-    const nextStepsArea = document.getElementById("nextSteps");
-    nextStepsArea.innerHTML = "";
-    steps[resultType].forEach(s => {
-      const li = document.createElement("li");
-      li.textContent = s;
-      nextStepsArea.appendChild(li);
-    });
-
-    const scoreArea = document.getElementById("scoreArea");
-    scoreArea.innerHTML = "";
-    for (let t in scores) {
-      scoreArea.innerHTML += `<p><strong>${typeNames[t]}:</strong> ${scores[t]}</p>`;
-    }
-
-    document.getElementById("resultArea").style.display = "block";
-  }
+/* === LINE公式アカウントへ誘導 === */
+document.getElementById("lineBtn").addEventListener("click", ()=>{
+  // 糸ファンディング公式LINE「FIREの学校」へ
+  window.open("https://lin.ee/MHHqwQ9", "_blank");
+});
 </script>
 
 </body>
